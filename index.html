@@ -66,66 +66,6 @@
         button:hover {
             background: #29b6f6; /* Darker sky blue on hover */
         }
-        /* Calendar styles */
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 20px;
-            padding: 10px;
-        }
-        .day {
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-            cursor: pointer;
-            background-color: #f0f0f0;
-            transition: background-color 0.3s;
-        }
-        .day:hover {
-            background-color: #e0e0e0;
-        }
-        .selected {
-            background-color: #4fc3f7; /* Sky blue for selected */
-            color: white;
-        }
-        /* Table styles */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-            font-size: 14px;
-        }
-        thead {
-            background-color: #00796b; /* Darker header */
-            color: white;
-        }
-        tbody tr:nth-child(odd) {
-            background-color: #e0f7fa; /* Light blue for odd rows */
-        }
-        tbody tr:nth-child(even) {
-            background-color: #ffffff; /* White for even rows */
-        }
-        td button {
-            padding: 4px 8px;
-            background: #dc3545; /* Red for delete buttons */
-            border: none;
-            border-radius: 4px;
-            color: white;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        td button:hover {
-            background: #c82333;
-        }
         /* Modal styles */
         .modal {
             display: none; /* Hidden by default */
@@ -158,9 +98,6 @@
         .modal-footer {
             border-top: 1px solid #ddd;
             text-align: right;
-        }
-        .modal-footer button {
-            margin-left: 8px;
         }
         /* Mobile view adjustments */
         @media (max-width: 768px) {
@@ -223,7 +160,7 @@
 
     <py-script>
         from datetime import datetime
-        from js import document
+        from js import document, alert
 
         def get_current_time(event):
             # Get the current date and time
@@ -241,7 +178,6 @@
     </py-script>
 
     <script>
-        // Your existing JavaScript code here...
         function openModal() {
             document.getElementById("scheduleModal").style.display = "flex";
             display_schedule();  // Refresh the schedule when opening the modal
@@ -282,9 +218,17 @@
 
             if (title && date && time) {
                 const schedule = get_schedule();
+                // Check for conflicts
+                const hasConflict = schedule.some(appointment => appointment.date === date && appointment.time === time);
+                if (hasConflict) {
+                    alert("Conflict: This appointment time is already booked.");
+                    return;
+                }
+
                 schedule.push({ title, date, time });
                 save_schedule(schedule);
                 display_schedule();
+                send_reminder(title, date, time);  // Send a reminder
                 clear_form();
             } else {
                 alert("Please fill out all fields.");
@@ -305,12 +249,7 @@
         }
 
         function handleAction() {
-            const actionButton = document.getElementById("action-button");
-            if (actionButton.innerText === "Add Appointment") {
-                add_appointment();
-            } else {
-                update_appointment();
-            }
+            add_appointment();
         }
 
         function sortByDate() {
@@ -318,6 +257,19 @@
             schedule.sort((a, b) => new Date(a.date + ' ' + a.time) - new Date(b.date + ' ' + b.time));
             save_schedule(schedule);
             display_schedule();
+        }
+
+        function send_reminder(title, date, time) {
+            const appointmentTime = new Date(date + ' ' + time);
+            const currentTime = new Date();
+            const timeDiff = appointmentTime - currentTime;
+
+            // Set a timeout to remind the user 30 minutes before the appointment
+            if (timeDiff > 0) {
+                setTimeout(() => {
+                    alert(`Reminder: Your appointment with ${title} is at ${time} on ${date}.`);
+                }, timeDiff - 30 * 60 * 1000); // 30 minutes in milliseconds
+            }
         }
     </script>
 </body>
