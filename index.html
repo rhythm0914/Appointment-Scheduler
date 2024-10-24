@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointment Scheduler</title>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css">
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e0f7fa; /* Sky blue background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .scheduler {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0px 6px 15px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            text-align: center;
+            border-top: 8px solid #00acc1; /* Light blue border at the top */
+        }
+
+        h1 {
+            color: #00796b; /* Darker teal for title */
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 16px;
+            display: block;
+            color: #00796b;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #b2ebf2;
+            background-color: #e0f7fa; /* Light blue input background */
+            font-size: 14px;
+            color: #00796b;
+        }
+
+        button {
+            background-color: #00796b;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #00796b;
+            text-align: left;
+        }
+
+        .delete-btn {
+            background-color: #ff5252; /* Red for delete button */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-left: 10px; /* Space between the name and the button */
+        }
+
+        .delete-btn:hover {
+            background-color: #c62828; /* Darker red on hover */
+        }
+
+        /* Styles for the appointments table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            color: #00796b;
+        }
+
+        th, td {
+            padding: 10px;
+            border: 1px solid #b2ebf2;
+            text-align: left;
+        }
+
+        th {
+            background-color: #b2ebf2; /* Light blue header */
+        }
+
+        tr:hover {
+            background-color: #e0f7fa; /* Light hover effect */
+        }
+    </style>
+</head>
+<body>
+    <div class="scheduler">
+        <h1>Appointment Scheduler</h1>
+        
+        <label for="patient-name">Patient Name:</label>
+        <input type="text" id="patient-name" placeholder="Enter patient name">
+
+        <label for="appointment-date">Appointment Date:</label>
+        <input type="date" id="appointment-date">
+
+        <label for="appointment-time">Appointment Time:</label>
+        <input type="time" id="appointment-time">
+
+        <label for="appointment-type">Appointment Type:</label>
+        <select id="appointment-type">
+            <option value="Consultation">Consultation</option>
+            <option value="Follow-up">Follow-up</option>
+            <option value="Routine Checkup">Routine Checkup</option>
+        </select>
+
+        <button id="schedule-btn">Schedule Appointment</button>
+        
+        <div id="result"></div>
+        
+        <!-- Appointment table for previous appointments -->
+        <table id="previous-appointments">
+            <thead>
+                <tr>
+                    <th>Patient Name</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Type</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        // Store appointment details in localStorage
+        function storeAppointment(patient, date, time, type) {
+            const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+            const appointment = {
+                patient: patient,
+                date: date,
+                time: time,
+                type: type
+            };
+            appointments.push(appointment);
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+            displayPreviousAppointments();
+        }
+
+        // Delete an appointment from localStorage
+        function deleteAppointment(index) {
+            const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+            appointments.splice(index, 1); // Remove appointment at the specified index
+            localStorage.setItem('appointments', JSON.stringify(appointments));
+            displayPreviousAppointments(); // Refresh the display
+        }
+
+        // Retrieve and display previous appointments from localStorage
+        function displayPreviousAppointments() {
+            const appointments = JSON.parse(localStorage.getItem('appointments')) || [];
+            const tbody = document.querySelector('#previous-appointments tbody');
+            tbody.innerHTML = ''; // Clear existing content
+
+            appointments.forEach((appointment, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${appointment.patient}</td>
+                    <td>${appointment.date}</td>
+                    <td>${appointment.time}</td>
+                    <td>${appointment.type}</td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteAppointment(${index})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // Call loadAppointment and displayPreviousAppointments when the page loads
+        window.onload = function() {
+            displayPreviousAppointments();
+        };
+    </script>
+
+    <py-script>
+        from js import document, JSON, localStorage
+
+        def schedule_appointment(event):
+            """Schedule an appointment based on user input."""
+            patient_name = document.getElementById("patient-name").value
+            appointment_date = document.getElementById("appointment-date").value
+            appointment_time = document.getElementById("appointment-time").value
+            appointment_type = document.getElementById("appointment-type").value
+
+            # Check for conflicts
+            appointments = JSON.parse(localStorage.getItem('appointments')) or []
+            for appointment in appointments:
+                if appointment['date'] == appointment_date and appointment['time'] == appointment_time:
+                    document.getElementById("result").innerHTML = "<h3>Conflict Warning:</h3><p>An appointment is already scheduled for this date and time.</p>"
+                    return
+
+            # Format the result
+            result_text = f"<h3>Appointment Details:</h3>"
+            result_text += f"<p>Patient: {patient_name}</p>"
+            result_text += f"<p>Date: {appointment_date}</p>"
+            result_text += f"<p>Time: {appointment_time}</p>"
+            result_text += f"<p>Type: {appointment_type}</p>"
+
+            # Display the result
+            document.getElementById("result").innerHTML = result_text
+
+            # Call JavaScript to store the appointment in localStorage
+            js.storeAppointment(patient_name, appointment_date, appointment_time, appointment_type)
+
+        # Attach the scheduling function to the button click
+        document.getElementById("schedule-btn").onclick = schedule_appointment
+    </py-script>
+</body>
+</html>
